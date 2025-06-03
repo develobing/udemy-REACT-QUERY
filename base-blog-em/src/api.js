@@ -15,7 +15,7 @@ export async function fetchComments(postId) {
 export async function deletePost(postId) {
   const response = await fetch(
     `https://jsonplaceholder.typicode.com/posts/${postId}`,
-    { method: "DELETE" }
+    { method: 'DELETE' }
   );
   return response.json();
 }
@@ -23,7 +23,7 @@ export async function deletePost(postId) {
 export async function updatePost(postId) {
   const response = await fetch(
     `https://jsonplaceholder.typicode.com/posts/${postId}`,
-    { method: "PATCH", data: { title: "REACT QUERY FOREVER!!!!" } }
+    { method: 'PATCH', data: { title: 'REACT QUERY FOREVER!!!!' } }
   );
   return response.json();
 }

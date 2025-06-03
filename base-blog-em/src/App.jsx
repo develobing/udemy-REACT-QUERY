@@ -1,5 +1,5 @@
-import { Posts } from "./Posts";
-import "./App.css";
+import { Posts } from './Posts';
+import './App.css';
 
 function App() {
   return (
