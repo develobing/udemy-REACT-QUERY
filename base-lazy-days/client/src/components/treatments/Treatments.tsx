@@ -1,11 +1,12 @@
-import { Box, Heading, HStack } from "@chakra-ui/react";
+import { Box, Heading, HStack } from '@chakra-ui/react';
 
-import { useTreatments } from "./hooks/useTreatments";
-import { Treatment } from "./Treatment";
+import { useTreatments } from './hooks/useTreatments';
+import { Treatment } from './Treatment';
 
 export function Treatments() {
   // replace with data from React Query
   const treatments = useTreatments();
+
   return (
     <Box>
       <Heading mt={10} textAlign="center">
