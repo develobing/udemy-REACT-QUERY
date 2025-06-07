@@ -1,13 +1,14 @@
-import dayjs from "dayjs";
-import { useState } from "react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
 
-import { AppointmentDateMap } from "../types";
-import { getAvailableAppointments } from "../utils";
-import { getMonthYearDetails, getNewMonthYear } from "./monthYear";
+import { AppointmentDateMap } from '../types';
+import { getAvailableAppointments } from '../utils';
+import { getMonthYearDetails, getNewMonthYear, MonthYear } from './monthYear';
 
-import { useLoginData } from "@/auth/AuthContext";
-import { axiosInstance } from "@/axiosInstance";
-import { queryKeys } from "@/react-query/constants";
+import { useLoginData } from '@/auth/AuthContext';
+import { axiosInstance } from '@/axiosInstance';
+import { queryKeys } from '@/react-query/constants';
 
 // for useQuery call
 async function getAppointments(
@@ -54,16 +55,85 @@ export function useAppointments() {
   /** ****************** START 3: useQuery  ***************************** */
   // useQuery call for appointments for the current monthYear
 
-  // TODO: update with useQuery!
+  // prefetch next month when monthYear changes
+  // - Solutions in the lecture
+  // const queryClient = useQueryClient();
+  // useEffect(() => {
+  //   // assume increment of one MonthYear
+  //   const nextMonthYear = getNewMonthYear(monthYear, 1);
+  //   queryClient.prefetchQuery({
+  //     queryKey: [
+  //       queryKeys.appointments,
+  //       nextMonthYear.year,
+  //       nextMonthYear.month,
+  //     ],
+  //     queryFn: () => getAppointments(nextMonthYear.year, nextMonthYear.month),
+  //   });
+  // }, [queryClient, monthYear]);
+
+  // - Solutions from me
+  const { updateAdjacent } = usePrefetchAdjacent();
+  useEffect(() => {
+    updateAdjacent(monthYear);
+  }, [monthYear.year, monthYear.month]);
+
   // Notes:
   //    1. appointments is an AppointmentDateMap (object with days of month
   //       as properties, and arrays of appointments for that day as values)
   //
   //    2. The getAppointments query function needs monthYear.year and
   //       monthYear.month
-  const appointments: AppointmentDateMap = {};
+  const fallback: AppointmentDateMap = {};
+  const { data: appointments = fallback } = useQuery({
+    queryKey: [queryKeys.appointments, monthYear.year, monthYear.month],
+    queryFn: () => getAppointments(monthYear.year, monthYear.month),
+  });
+
+  // const { updateAdjacent } = usePrefetchAdjacent();
+  // useEffect(() => {
+  //   updateAdjacent(monthYear);
+  // }, [monthYear.year, monthYear.month]);
 
   /** ****************** END 3: useQuery  ******************************* */
 
   return { appointments, monthYear, updateMonthYear, showAll, setShowAll };
+}
+
+// This hook is used to prefetch the appointments for the next and previous monthYears
+// - This is written by me, not from the lecture
+export function usePrefetchAdjacent() {
+  const isBeforeToday = (monthYear: MonthYear) => {
+    const today = dayjs();
+    const monthStart = monthYear.startDate;
+    return (
+      monthStart.isBefore(today, 'month') || monthStart.isSame(today, 'month')
+    );
+  };
+
+  const getAdjacents = (monthYear: MonthYear) => {
+    const next = getNewMonthYear(monthYear, 1);
+    const prev = getNewMonthYear(monthYear, -1);
+    return { next, prev };
+  };
+
+  const queryClient = useQueryClient();
+  const updateAdjacent = (monthYear: MonthYear) => {
+    const { next, prev } = getAdjacents(monthYear);
+
+    if (!isBeforeToday(prev)) {
+      queryClient.prefetchQuery({
+        queryKey: [queryKeys.appointments, prev.year, prev.month],
+        queryFn: () => getAppointments(prev.year, prev.month),
+      });
+    }
+
+    queryClient.prefetchQuery({
+      queryKey: [queryKeys.appointments, next.year, next.month],
+      queryFn: () => getAppointments(next.year, next.month),
+    });
+  };
+
+  return {
+    updateAdjacent,
+  };
 }
