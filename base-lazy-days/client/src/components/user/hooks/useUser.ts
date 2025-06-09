@@ -28,7 +28,7 @@ export function useUser() {
 
   const { data: user } = useQuery({
     enabled: !!userId,
-    queryKey: generateUserKey(userId, userToken),
+    queryKey: generateUserKey(userId),
     queryFn: () => getUser(userId, userToken),
     staleTime: Infinity, // never stale
   });
@@ -36,10 +36,7 @@ export function useUser() {
   // meant to be called from useAuth
   function updateUser(newUser: User): void {
     // update user in query cache
-    queryClient.setQueryData(
-      generateUserKey(newUser.id, newUser.token),
-      newUser
-    );
+    queryClient.setQueryData(generateUserKey(newUser.id), newUser);
   }
 
   // meant to be called from useAuth
